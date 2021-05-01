@@ -1,10 +1,10 @@
 # Imports required to add routes
 from market import app
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, request
 from market.models import Item, User
-from market.forms import RegisterForm, LoginForm
+from market.forms import RegisterForm, LoginForm, PurchaseItemForm, SellItemForm
 from market import db
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 
 
 # Index page
@@ -15,11 +15,35 @@ def index():
 
 
 # Market Page
-@app.route('/market')
+@app.route('/market', methods=['GET', 'POST'])
 @login_required
 def market():
-    items = Item.query.all()
-    return render_template('market.html', items=items)
+    purchase_form = PurchaseItemForm()
+    # If the method is POST
+    if request.method == 'POST':
+        # Get item name from form
+        purchased_item = request.form.get('purchased_item')
+        # Find item in Database
+        p_item_object = Item.query.filter_by(name=purchased_item).first()
+        # Check if there exists such an object
+        if p_item_object:
+            # Only if user can purchase
+            if current_user.can_purchase(p_item_object):
+                # Call a function to set ownership of item
+                p_item_object.setOwnership(current_user)
+                flash(
+                    f'Congratulations! You just purchased {p_item_object.name} for ₹{p_item_object.price}', category='success')
+            else:
+                flash(
+                    f'Sorry! your budget is not enough to purchase {p_item_object.name}', category='danger')
+
+        return redirect(url_for('market'))
+
+    # If the request is GET
+    if request.method == 'GET':
+        # Only show items that have no owners
+        items = Item.query.filter_by(owner=None)
+        return render_template('market.html', items=items, purchase_form=purchase_form)
 
 
 # Register Page

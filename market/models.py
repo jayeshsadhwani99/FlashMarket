@@ -43,8 +43,12 @@ class User(db.Model, UserMixin):
     def check_password_correction(self, attempted_password):
         return bcrypt.check_password_hash(self.password_hash, attempted_password)
 
+    def can_purchase(self, item_obj):
+        return self.budget >= item_obj.price
 
 # Creating an Item Model
+
+
 class Item(db.Model):
     # Columns for the table
     id = db.Column(db.Integer(), primary_key=True)
@@ -57,3 +61,10 @@ class Item(db.Model):
 
     def __repr__(self):
         return '<Item %r>' % self.id
+
+    def setOwnership(self, user):
+        # Set ownership of the item to current user
+        self.owner = user.id
+        # Decrease the budget of the user
+        user.budget -= self.price
+        db.session.commit()
