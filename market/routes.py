@@ -2,7 +2,7 @@
 from market import app
 from flask import render_template, redirect, url_for, flash
 from market.models import Item, User
-from market.forms import RegisterForm
+from market.forms import RegisterForm, LoginForm
 from market import db
 
 
@@ -41,4 +41,5 @@ def register():
 # Login Page
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    return render_template('login.html')
+    form = LoginForm()
+    return render_template('login.html', form=form)
