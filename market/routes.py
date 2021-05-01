@@ -18,9 +18,14 @@ def index():
 @app.route('/market', methods=['GET', 'POST'])
 @login_required
 def market():
+    # Initializing the forms
     purchase_form = PurchaseItemForm()
+    selling_form = SellItemForm()
+
     # If the method is POST
     if request.method == 'POST':
+        # Purchase Item Logic
+
         # Get item name from form
         purchased_item = request.form.get('purchased_item')
         # Find item in Database
@@ -37,13 +42,32 @@ def market():
                 flash(
                     f'Sorry! your budget is not enough to purchase {p_item_object.name}', category='danger')
 
+        # Sell Item Logic
+
+        # Get the item name from form
+        sold_item = request.form.get('sold_item')
+        # Find item in Database
+        s_item_object = Item.query.filter_by(name=sold_item).first()
+        # Check if there exists such an item
+        if s_item_object:
+            # Check if this user can sell the item
+            if current_user.can_sell(s_item_object):
+                s_item_object.sell(current_user)
+                flash(
+                    f'Congratulations! You just sold {s_item_object.name} back to the market for ₹{s_item_object.price}', category='success')
+            else:
+                flash(
+                    f'Something went wrong with selling {s_item_object}.', category='danger')
+
         return redirect(url_for('market'))
 
     # If the request is GET
     if request.method == 'GET':
         # Only show items that have no owners
         items = Item.query.filter_by(owner=None)
-        return render_template('market.html', items=items, purchase_form=purchase_form)
+        # Check if user owns anything
+        owned_items = Item.query.filter_by(owner=current_user.id)
+        return render_template('market.html', items=items, purchase_form=purchase_form, owned_items=owned_items, selling_form=selling_form)
 
 
 # Register Page
