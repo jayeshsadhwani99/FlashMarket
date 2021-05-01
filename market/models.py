@@ -19,8 +19,17 @@ class User(db.Model, UserMixin):
     email_address = db.Column(db.String(length=50),
                               nullable=False, unique=True)
     password_hash = db.Column(db.String(length=60), nullable=False)
-    name = db.Column(db.Integer(), nullable=False, default=1000)
+    budget = db.Column(db.Integer(), nullable=False, default=1000)
     items = db.relationship('Item', backref='owned_user', lazy=True)
+
+    # We can define additional properties of our model like this
+    @property
+    # Puts a comma after thousands
+    def prettier_budget(self):
+        if len(str(self.budget)) >= 4:
+            return f'₹{str(self.budget)[:-3]},{str(self.budget)[-3:]}'
+        else:
+            return f'₹{self.budget}'
 
     @property
     def password(self):
@@ -34,9 +43,8 @@ class User(db.Model, UserMixin):
     def check_password_correction(self, attempted_password):
         return bcrypt.check_password_hash(self.password_hash, attempted_password)
 
-        # Creating an Item Model
 
-
+# Creating an Item Model
 class Item(db.Model):
     # Columns for the table
     id = db.Column(db.Integer(), primary_key=True)
