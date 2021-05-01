@@ -4,7 +4,7 @@ from flask import render_template, redirect, url_for, flash
 from market.models import Item, User
 from market.forms import RegisterForm, LoginForm
 from market import db
-from flask_login import login_user, logout_user
+from flask_login import login_user, logout_user, login_required
 
 
 # Index page
@@ -16,6 +16,7 @@ def index():
 
 # Market Page
 @app.route('/market')
+@login_required
 def market():
     items = Item.query.all()
     return render_template('market.html', items=items)
@@ -31,6 +32,11 @@ def register():
                               password=form.password1.data)
         db.session.add(user_to_create)
         db.session.commit()
+
+        # Login user when created
+        login_user(user_to_create)
+        flash(
+            f'Account created successfully. Now logged in as: {user_to_create.username}', category='success')
         return redirect(url_for('market'))
     if form.errors != {}:  # If there are mo errors from validations
         for err_msg in form.errors.values():

@@ -20,4 +20,10 @@ bcrypt = Bcrypt(app)
 # Initialize the Login Manager
 login_manager = LoginManager(app)
 
+# Tell the login manager about the login page
+login_manager.login_view = 'login'
+
+# Customize Flash Message
+login_manager.login_message_category = 'info'
+
 from market import routes 
